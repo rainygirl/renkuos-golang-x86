@@ -1,0 +1,55 @@
+Give syscall's sysvicall6 an eight-word argument window of its own.
+
+go-haiku386-mmap.patch made asmsysvicall6 copy eight argument words, so
+that a call with a 64-bit argument can use seven. syscall_sysvicall6 and
+syscall_rawsysvicall6 still pointed it at their own a1..a6 on the caller's
+frame, where words seven and eight are the result slots. A caller that
+needs seven words but can only pass six to sysvicall6 therefore passed
+junk in the seventh: golang.org/x/sys/unix's mmap for haiku/386 (five words
+and a two-word off_t), as patched in renkuos-gotools, relies on that word
+being zero. The standard library's own mmap uses sysvicall8 from
+go-haiku386-toolchain.patch and was not affected.
+
+The two functions now copy their six arguments into an array padded with
+two zero words and pass that. On amd64, where the window is six words, the
+padding is never read.
+
+Taken from renkuos-gotools' go-haiku386-fixes.patch, which also carried
+the 64-bit offset fixes (already in go-haiku386-toolchain.patch) and turned
+async preemption off by default (not needed once sigaction is imported by
+its symbol version; see docs/NOTES.md).
+
+--- a/src/runtime/syscall_haiku.go
++++ b/src/runtime/syscall_haiku.go
+@@ -40,10 +40,16 @@ func pipe1() // declared for vet; do NOT call
+ //go:linkname syscall_sysvicall6
+ //go:cgo_unsafe_args
+ func syscall_sysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uintptr) {
++	// asmsysvicall6 copies eight words on 386 (sys_haiku_386.s). Read off this
++	// frame, words seven and eight are the result slots, so a call that needs
++	// a seventh word it cannot pass here (golang.org/x/sys/unix's mmap: five
++	// words and an off_t of two) got junk as the high half of its offset.
++	// Hand it eight words of its own, the last two zero.
++	args := [8]uintptr{a1, a2, a3, a4, a5, a6, 0, 0}
+ 	call := libcall{
+ 		fn:   fn,
+ 		n:    nargs,
+-		args: uintptr(unsafe.Pointer(&a1)),
++		args: uintptr(noescape(unsafe.Pointer(&args[0]))),
+ 	}
+ 	entersyscallblock()
+ 	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
+@@ -55,10 +61,12 @@ func syscall_sysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err
+ //go:linkname syscall_rawsysvicall6
+ //go:cgo_unsafe_args
+ func syscall_rawsysvicall6(fn, nargs, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uintptr) {
++	// Eight words of our own, as in syscall_sysvicall6.
++	args := [8]uintptr{a1, a2, a3, a4, a5, a6, 0, 0}
+ 	call := libcall{
+ 		fn:   fn,
+ 		n:    nargs,
+-		args: uintptr(unsafe.Pointer(&a1)),
++		args: uintptr(noescape(unsafe.Pointer(&args[0]))),
+ 	}
+ 	asmcgocall(unsafe.Pointer(&asmsysvicall6x), unsafe.Pointer(&call))
+ 	return call.r1, call.r2, call.err

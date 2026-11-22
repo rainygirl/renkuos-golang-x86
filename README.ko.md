@@ -25,7 +25,7 @@ pkgman install golang_x86
 ## 파일로 설치
 
 ```sh
-pkgman install ./golang_x86-1.26.5-1-x86_gcc2.hpkg
+pkgman install ./golang_x86-1.26.5-2-x86_gcc2.hpkg
 ```
 
 ## 사용
@@ -54,12 +54,14 @@ pkgman uninstall golang_x86
 Linux나 macOS에서, 부트스트랩용 Go와 Haiku의 `package` 도구가 있어야 합니다.
 
 ```sh
-./build.sh                    # dist/golang_x86-<version>-1-x86_gcc2.hpkg 생성
+./build.sh                    # dist/golang_x86-<version>-2-x86_gcc2.hpkg 생성
 ```
 
 `tests/run.sh`는 설치 후 32비트 기기에서 돌리는 스모크 테스트입니다. 패치가
 무엇을 바꾸는지, 무엇을 시험했고 무엇을 하지 않았는지는
-[docs/NOTES.md](docs/NOTES.md)(영문)에 있습니다.
+[docs/NOTES.md](docs/NOTES.md)(영문)에 있습니다. `patches/`가 haiku/386용 패치의
+전부이며, [renkuos-gotools](https://github.com/rainygirl/renkuos-gotools)의
+32비트 도구들도 이 툴체인으로 빌드합니다.
 
 ## AI 사용 고지
 

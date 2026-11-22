@@ -14,10 +14,22 @@
 
 ## Patches
 
+`build.sh` applies them in this order; each builds on the ones before it.
+
+| Patch | From |
+| --- | --- |
+| `go-haiku386.patch` (the port), `-netpoll`, `-preempt`, `-sockets`, `-semacreate`, `-osyield`, `-mmap` | renkuos-rtailscale `i386/go-runtime/`, which explains each |
+| `go-haiku386-toolchain.patch` | this repository, revision 1 |
+| `go-haiku386-syscallargs.patch` | renkuos-gotools, merged in revision 2 |
+
+This is the one haiku/386 patch series: the 32-bit rclone, Syncthing and gh
+of [renkuos-gotools](https://github.com/rainygirl/renkuos-gotools) are built
+with the cross toolchain that `build.sh` leaves in `.work/go`.
+
 The first seven are the runtime port that
 [renkuos-rtailscale](https://github.com/rainygirl/renkuos-rtailscale) builds
-its 32-bit Tailscale with (`i386/go-runtime/` there, which explains each).
-`go-haiku386-toolchain.patch` is what the toolchain itself needed on top:
+its 32-bit Tailscale with. `go-haiku386-toolchain.patch` is what the
+toolchain itself needed on top:
 
 - **Versioned libroot imports.** The base port imported `sigaction`,
   `sigprocmask`, `sysconf`, `fstat`, `stat`, `lstat`, `getrlimit` and
@@ -44,6 +56,27 @@ dereference, received SIGUSR1 or started a child process crashed every time,
 `go build` included. With the eighth patch: 0 of 50, and the checks below
 pass.
 
+`go-haiku386-syscallargs.patch` makes `syscall_sysvicall6` and
+`syscall_rawsysvicall6` copy their six arguments into an eight-word array
+whose last two words are zero. `go-haiku386-mmap.patch` had widened the
+window `asmsysvicall6` copies to eight words, but these two still pointed it
+at `a1` on their own frame, where words seven and eight are the result
+slots. renkuos-gotools' `golang.org/x/sys/unix` for haiku/386 calls `mmap`
+through `sysvicall6` with six words and needs the seventh, the high half of
+the offset, to be zero.
+
+### What was merged from renkuos-gotools
+
+renkuos-gotools built its 32-bit tools with the seven-patch tree of
+renkuos-rtailscale and its own `patches/go/go-haiku386-fixes.patch` on top,
+which did three things:
+
+| Fix in go-haiku386-fixes.patch | Here |
+| --- | --- |
+| async preemption off by default on haiku/386, because `hello` crashed with SIGSEGV | dropped: a workaround for the unversioned `sigaction` import, fixed by `go-haiku386-toolchain.patch`. With it, async preemption stays on and `tests/preempt.go` (which hangs with `GODEBUG=asyncpreemptoff=1`) passes |
+| two-word `off_t` in `Seek`, `pread`, `pwrite`, `Truncate`, `Ftruncate` | dropped: the same change is in `go-haiku386-toolchain.patch`, which also does `mmap` with `sysvicall8` |
+| a zero-padded eight-word window in `syscall_sysvicall6` | kept, as `go-haiku386-syscallargs.patch` |
+
 ## Verified
 
 Machine: Haiku nightly hrev60450 `x86_gcc2h` in QEMU (TCG, 4 virtual CPUs, 4
@@ -64,6 +97,26 @@ Runtime settings were the defaults: no `GOMAXPROCS`, no `GODEBUG`.
 - `go build std`: exit 0.
 - Programs cross-built with the same tree and run repeatedly on that machine:
   `hello` 50 of 50, `conc` 20 of 20, `httploop` 10 of 10, `syscheck` 10 of 10.
+
+Revision 2, same machine and settings (2026-11-22):
+
+- `tests/run.sh`, all passing, `preempt.go` included (5.7 s; with
+  `GODEBUG=asyncpreemptoff=1` it still runs after 40 s, so it does test
+  async preemption). Built natively and run repeatedly: `hello` 50 of 50,
+  `preempt` 10 of 10, a stress of 2000 goroutines with channels, timers,
+  tickers and a mutex 10 of 10.
+- `os/exec`: 20 concurrent children with exit codes, and a stdin pipe.
+- `net/http` client: `http://example.com/`, `http://neverssl.com/` and the
+  QEMU host, all 200.
+- Signals: `signal.Notify` for SIGINT and SIGTERM delivers both; without it,
+  each terminates the program with that signal.
+- `go test -short strconv sort os/signal time sync`: all pass except
+  `os/signal`'s `TestNotifyContextStringer`, which expects the SIGTERM name
+  `terminated` where Haiku's signal table (the same for amd64) says
+  `termination requested`; the rest of `os/signal` passes with that test
+  skipped.
+- rclone, Syncthing and gh from renkuos-gotools, cross-built with
+  `.work/go/bin/go` of this tree: see the verification there.
 
 ## Not verified, known limits
 

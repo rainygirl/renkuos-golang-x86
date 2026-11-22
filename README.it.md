@@ -25,7 +25,7 @@ Il pacchetto installa `go` e `gofmt`; `GOROOT` è
 ## Installazione da file
 
 ```sh
-pkgman install ./golang_x86-1.26.5-1-x86_gcc2.hpkg
+pkgman install ./golang_x86-1.26.5-2-x86_gcc2.hpkg
 ```
 
 ## Uso
@@ -56,12 +56,15 @@ Su Linux o macOS, con un Go da cui fare il bootstrap e lo strumento `package`
 di Haiku:
 
 ```sh
-./build.sh                    # scrive dist/golang_x86-<version>-1-x86_gcc2.hpkg
+./build.sh                    # scrive dist/golang_x86-<version>-2-x86_gcc2.hpkg
 ```
 
 `tests/run.sh` è lo smoke test, da eseguire sulla macchina a 32 bit dopo
 l'installazione. Cosa cambiano le patch, cosa è stato provato e cosa no è in
-[docs/NOTES.md](docs/NOTES.md) (in inglese).
+[docs/NOTES.md](docs/NOTES.md) (in inglese). `patches/` è l'unica serie di patch per
+haiku/386: anche gli strumenti a 32 bit di
+[renkuos-gotools](https://github.com/rainygirl/renkuos-gotools) sono compilati
+con questo toolchain.
 
 ## Uso dell'IA
 
