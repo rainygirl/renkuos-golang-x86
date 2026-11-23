@@ -20,7 +20,7 @@
 #                     (default: "package" in PATH). Without one the staged
 #                     tree is left in .work/stage: on Haiku,
 #                     "cd .work/stage && package create ../../dist/<name>.hpkg".
-#   REVISION          package revision (default 2)
+#   REVISION          package revision (default 3)
 #   VENDOR            vendor field; has to match the repository the package
 #                     goes into (default "rainygirl")
 #   WORK              scratch directory (default: ./.work)
@@ -29,7 +29,7 @@ set -eu
 GO_REPOSITORY=${GO_REPOSITORY:-https://github.com/korli/go.git}
 GO_BRANCH=golang-1.26-haiku
 GO_COMMIT=4af74db8618f13d5bc0f3447fa6a7adb906fa709
-REVISION=${REVISION:-2}
+REVISION=${REVISION:-3}
 NAME=golang_x86
 # Where HaikuPorts' golang puts GOROOT ($developLibDir/go), for the x86
 # secondary architecture.
@@ -64,7 +64,7 @@ if [ -z "${GO_SRC:-}" ] && [ ! -f "$src/.patched" ]; then
 	git -C "$src" checkout --quiet --detach "$GO_COMMIT"
 	# The order matters: each patch builds on the ones before it.
 	git -C "$src" apply --unidiff-zero "$here/patches/go-haiku386.patch"
-	for p in netpoll preempt sockets semacreate osyield mmap toolchain syscallargs; do
+	for p in netpoll preempt sockets semacreate osyield mmap toolchain syscallargs hosts; do
 		git -C "$src" apply "$here/patches/go-haiku386-$p.patch"
 	done
 	: > "$src/.patched"

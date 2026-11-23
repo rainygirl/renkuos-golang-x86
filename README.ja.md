@@ -26,7 +26,7 @@ pkgman install golang_x86
 ## ファイルからインストール
 
 ```sh
-pkgman install ./golang_x86-1.26.5-2-x86_gcc2.hpkg
+pkgman install ./golang_x86-1.26.5-3-x86_gcc2.hpkg
 ```
 
 ## 使い方
@@ -44,6 +44,10 @@ go build ./...
 - 最初のビルドでは標準ライブラリをビルドキャッシュ (`~/.cache/go-build`) に
   コンパイルします。ブートボリュームが小さい場合は `GOCACHE`、`GOPATH`、
   `TMPDIR` を別のボリュームに向けてください。
+- `net` パッケージは Haiku の hosts ファイル
+  `/boot/system/settings/network/hosts` を読みます (Haiku には `/etc/hosts` が
+  ありません)。そのため `localhost` を引けます。リビジョン 1 と 2 は DNS
+  サーバーに問い合わせていました。
 
 ## アンインストール
 
@@ -56,7 +60,7 @@ pkgman uninstall golang_x86
 Linux か macOS で、ブートストラップ用の Go と Haiku の `package` ツールが必要です。
 
 ```sh
-./build.sh                    # dist/golang_x86-<version>-2-x86_gcc2.hpkg を作成
+./build.sh                    # dist/golang_x86-<version>-3-x86_gcc2.hpkg を作成
 ```
 
 `tests/run.sh` は、インストール後に 32 ビット機で実行するスモークテストです。

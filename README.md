@@ -25,7 +25,7 @@ The package installs `go` and `gofmt`; `GOROOT` is
 ## Install from a file
 
 ```sh
-pkgman install ./golang_x86-1.26.5-2-x86_gcc2.hpkg
+pkgman install ./golang_x86-1.26.5-3-x86_gcc2.hpkg
 ```
 
 ## Use
@@ -43,6 +43,9 @@ go build ./...
 - The first build compiles the standard library into the build cache
   (`~/.cache/go-build`). Point `GOCACHE`, `GOPATH` and `TMPDIR` at another
   volume if the boot volume is small.
+- The `net` package reads Haiku's hosts file,
+  `/boot/system/settings/network/hosts` (Haiku has no `/etc/hosts`), so
+  `localhost` resolves. Revisions 1 and 2 sent it to the DNS server.
 
 ## Uninstall
 
@@ -55,7 +58,7 @@ pkgman uninstall golang_x86
 On Linux or macOS, with a Go to bootstrap from and Haiku's `package` tool:
 
 ```sh
-./build.sh                    # writes dist/golang_x86-<version>-2-x86_gcc2.hpkg
+./build.sh                    # writes dist/golang_x86-<version>-3-x86_gcc2.hpkg
 ```
 
 `tests/run.sh` is the smoke test, to be run on the 32-bit machine after

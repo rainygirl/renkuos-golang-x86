@@ -22,7 +22,7 @@ timed() {
 }
 
 go version
-for prog in hello syscheck conc preempt httploop; do
+for prog in hello syscheck conc preempt httploop localhost; do
 	echo "== $prog"
 	timed "go build" go build -o "$work/$prog" "$here/$prog.go"
 	"$work/$prog"

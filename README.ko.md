@@ -25,7 +25,7 @@ pkgman install golang_x86
 ## 파일로 설치
 
 ```sh
-pkgman install ./golang_x86-1.26.5-2-x86_gcc2.hpkg
+pkgman install ./golang_x86-1.26.5-3-x86_gcc2.hpkg
 ```
 
 ## 사용
@@ -42,6 +42,9 @@ go build ./...
   모듈에는 어떤 아키텍처용 Haiku 파일도 없습니다.
 - 첫 빌드는 표준 라이브러리를 빌드 캐시(`~/.cache/go-build`)에 컴파일합니다.
   부트 볼륨이 작으면 `GOCACHE`, `GOPATH`, `TMPDIR`을 다른 볼륨으로 지정하세요.
+- `net` 패키지는 Haiku의 hosts 파일 `/boot/system/settings/network/hosts`를
+  읽습니다(Haiku에는 `/etc/hosts`가 없습니다). 그래서 `localhost`를 찾을 수
+  있습니다. 리비전 1과 2는 이를 DNS 서버에 물었습니다.
 
 ## 제거
 
@@ -54,7 +57,7 @@ pkgman uninstall golang_x86
 Linux나 macOS에서, 부트스트랩용 Go와 Haiku의 `package` 도구가 있어야 합니다.
 
 ```sh
-./build.sh                    # dist/golang_x86-<version>-2-x86_gcc2.hpkg 생성
+./build.sh                    # dist/golang_x86-<version>-3-x86_gcc2.hpkg 생성
 ```
 
 `tests/run.sh`는 설치 후 32비트 기기에서 돌리는 스모크 테스트입니다. 패치가

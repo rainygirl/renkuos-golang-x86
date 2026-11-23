@@ -21,6 +21,7 @@
 | `go-haiku386.patch` (the port), `-netpoll`, `-preempt`, `-sockets`, `-semacreate`, `-osyield`, `-mmap` | renkuos-rtailscale `i386/go-runtime/`, which explains each |
 | `go-haiku386-toolchain.patch` | this repository, revision 1 |
 | `go-haiku386-syscallargs.patch` | renkuos-gotools, merged in revision 2 |
+| `go-haiku386-hosts.patch` | renkuos-golang (arm64) `src/net/hook_haiku.go`, revision 3 |
 
 This is the one haiku/386 patch series: the 32-bit rclone, Syncthing and gh
 of [renkuos-gotools](https://github.com/rainygirl/renkuos-gotools) are built
@@ -64,6 +65,14 @@ at `a1` on their own frame, where words seven and eight are the result
 slots. renkuos-gotools' `golang.org/x/sys/unix` for haiku/386 calls `mmap`
 through `sysvicall6` with six words and needs the seventh, the high half of
 the offset, to be zero.
+
+`go-haiku386-hosts.patch` adds `src/net/hook_haiku.go`, the same file as in
+renkuos-golang (arm64) revision 10. Haiku has no `/etc/hosts`; its hosts
+file is `/boot/system/settings/network/hosts`, next to the `resolv.conf`
+that korli's tree already reads. Without it the pure Go resolver sent
+`localhost` to the DNS server and failed (`lookup localhost on 10.0.2.3:53:
+no such host`), so `net.Listen("tcp", "localhost:0")` and Caddy's default
+admin address did not work.
 
 ### What was merged from renkuos-gotools
 
@@ -117,6 +126,16 @@ Revision 2, same machine and settings (2026-11-22):
   skipped.
 - rclone, Syncthing and gh from renkuos-gotools, cross-built with
   `.work/go/bin/go` of this tree: see the verification there.
+
+Revision 3, same machine and settings (2026-11-23), the package installed
+with `pkgman install <file>`:
+
+- `go version`: `go1.26.5 haiku/386`.
+- `tests/run.sh`, all passing, including the new `localhost.go`:
+  `net.LookupHost("localhost")` returns `[127.0.0.1 ::1]`, and an HTTP server
+  listening on `localhost:0` answers a GET to `http://localhost:<port>/`.
+- renkuos-gotools' eight 32-bit tools, cross-built with `.work/go/bin/go` of
+  this tree: see the verification there.
 
 ## Not verified, known limits
 
